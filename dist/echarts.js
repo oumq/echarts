@@ -35677,8 +35677,10 @@ function rotateTextRect(textRect, rotate) {
     var boundingBox = textRect.plain();
     var beforeWidth = boundingBox.width;
     var beforeHeight = boundingBox.height;
-    var afterWidth = beforeWidth * Math.abs(Math.cos(rotateRadians)) + Math.abs(beforeHeight * Math.sin(rotateRadians));
-    var afterHeight = beforeWidth * Math.abs(Math.sin(rotateRadians)) + Math.abs(beforeHeight * Math.cos(rotateRadians));
+    var afterWidth = beforeWidth * Math.abs(Math.cos(rotateRadians))
+        + Math.abs(beforeHeight * Math.sin(rotateRadians));
+    var afterHeight = beforeWidth * Math.abs(Math.sin(rotateRadians))
+        + Math.abs(beforeHeight * Math.cos(rotateRadians));
     var rotatedRect = new BoundingRect(boundingBox.x, boundingBox.y, afterWidth, afterHeight);
 
     return rotatedRect;
@@ -70709,6 +70711,7 @@ var axisTrigger = function (payload, ecModel, api) {
     var finder = payload;
     var dispatchAction = payload.dispatchAction || bind(api.dispatchAction, api);
     var coordSysAxesInfo = ecModel.getComponent('axisPointer').coordSysAxesInfo;
+    var showFirst = ecModel.getComponent('axisPointer').option.showFirst;
 
     // Pending
     // See #6121. But we are not able to reproduce it yet.
@@ -70759,7 +70762,7 @@ var axisTrigger = function (payload, ecModel, api) {
                 if (val == null && !isIllegalPoint) {
                     val = axis.pointToData(point);
                 }
-                val != null && processOnAxis(axisInfo, val, updaters, false, outputFinder);
+                val != null && processOnAxis(axisInfo, val, updaters, false, outputFinder, showFirst);
             }
         });
     });
@@ -70785,7 +70788,7 @@ var axisTrigger = function (payload, ecModel, api) {
         }
     });
     each$14(linkTriggers, function (val, tarKey) {
-        processOnAxis(axesInfo[tarKey], val, updaters, true, outputFinder);
+        processOnAxis(axesInfo[tarKey], val, updaters, true, outputFinder, showFirst);
     });
 
     updateModelActually(showValueMap, axesInfo, outputFinder);
@@ -70795,7 +70798,7 @@ var axisTrigger = function (payload, ecModel, api) {
     return outputFinder;
 };
 
-function processOnAxis(axisInfo, newValue, updaters, dontSnap, outputFinder) {
+function processOnAxis(axisInfo, newValue, updaters, dontSnap, outputFinder, showFirst) {
     var axis = axisInfo.axis;
 
     if (axis.scale.isBlank() || !axis.containData(newValue)) {
@@ -70826,7 +70829,9 @@ function processOnAxis(axisInfo, newValue, updaters, dontSnap, outputFinder) {
         }
     }
 
-    updaters.showPointer(axisInfo, newValue, payloadBatch, outputFinder);
+    if (!(newValue === 0 && !showFirst)) {
+        updaters.showPointer(axisInfo, newValue, payloadBatch, outputFinder);
+    }
     // Tooltip should always be snapToValue, otherwise there will be
     // incorrect "axis value ~ series value" mapping displayed in tooltip.
     updaters.showTooltip(axisInfo, payloadInfo, snapToValue);
@@ -71169,7 +71174,8 @@ var AxisPointerModel = extendComponentModel({
             shadowOffsetY: 2,
 
             // For mobile performance
-            throttle: 40
+            throttle: 40,
+            showFirst: true
         }
     }
 
