@@ -59,6 +59,7 @@ export default function (payload, ecModel, api) {
     var finder = payload;
     var dispatchAction = payload.dispatchAction || zrUtil.bind(api.dispatchAction, api);
     var coordSysAxesInfo = ecModel.getComponent('axisPointer').coordSysAxesInfo;
+    var showFirst = ecModel.getComponent('axisPointer').option.showFirst;
 
     // Pending
     // See #6121. But we are not able to reproduce it yet.
@@ -109,7 +110,7 @@ export default function (payload, ecModel, api) {
                 if (val == null && !isIllegalPoint) {
                     val = axis.pointToData(point);
                 }
-                val != null && processOnAxis(axisInfo, val, updaters, false, outputFinder);
+                val != null && processOnAxis(axisInfo, val, updaters, false, outputFinder, showFirst);
             }
         });
     });
@@ -135,7 +136,7 @@ export default function (payload, ecModel, api) {
         }
     });
     each(linkTriggers, function (val, tarKey) {
-        processOnAxis(axesInfo[tarKey], val, updaters, true, outputFinder);
+        processOnAxis(axesInfo[tarKey], val, updaters, true, outputFinder, showFirst);
     });
 
     updateModelActually(showValueMap, axesInfo, outputFinder);
@@ -145,7 +146,7 @@ export default function (payload, ecModel, api) {
     return outputFinder;
 }
 
-function processOnAxis(axisInfo, newValue, updaters, dontSnap, outputFinder) {
+function processOnAxis(axisInfo, newValue, updaters, dontSnap, outputFinder, showFirst) {
     var axis = axisInfo.axis;
 
     if (axis.scale.isBlank() || !axis.containData(newValue)) {
@@ -176,7 +177,9 @@ function processOnAxis(axisInfo, newValue, updaters, dontSnap, outputFinder) {
         }
     }
 
-    updaters.showPointer(axisInfo, newValue, payloadBatch, outputFinder);
+    if (!(newValue === 0 && !showFirst)) {
+        updaters.showPointer(axisInfo, newValue, payloadBatch, outputFinder);
+    }
     // Tooltip should always be snapToValue, otherwise there will be
     // incorrect "axis value ~ series value" mapping displayed in tooltip.
     updaters.showTooltip(axisInfo, payloadInfo, snapToValue);

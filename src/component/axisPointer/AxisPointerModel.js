@@ -106,7 +106,8 @@ var AxisPointerModel = echarts.extendComponentModel({
             shadowOffsetY: 2,
 
             // For mobile performance
-            throttle: 40
+            throttle: 40,
+            showFirst: true
         }
     }
 
